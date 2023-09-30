@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Cooker - Artist Details</title>
+</head>
+<body>
+
+    <h1>{{ artist_name }}</h1>
+
+    <!-- Bar Chart for Top Tracks Popularity -->
+    <div id="plotly-div"></div>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        var plots = {{ graphJSON | safe }};
+        Plotly.newPlot('plotly-div', plots);
+    </script>
+    
+    <!-- Radar Chart for Audio Features -->
+    <div id="radar-div"></div>
+    <script>
+        var radarData = {{ radarJSON | safe }};
+        var layout = { polar: { radialaxis: { visible: true, range: [0, 1] } } };
+        Plotly.newPlot('radar-div', radarData, layout);
+    </script>
+    
+    <!-- Pie Chart for Genre Distribution -->
+    <div id="genre-div"></div>
+    <script>
+        var genreData = {{ genreJSON | safe }};
+        Plotly.newPlot('genre-div', genreData);
+    </script>
+    
+    <!-- Histogram for Popularity Distribution -->
+    <div id="popularity-div"></div>
+    <script>
+        var popularityData = {{ popularityJSON | safe }};
+        var layout = {
+            title: 'Track Popularity Distribution',
+            xaxis: {title: 'Popularity'},
+            yaxis: {title: 'Number of Tracks'}
+        };
+        Plotly.newPlot('popularity-div', popularityData, layout);
+    </script>
+    <div id="network" style="width: 800px; height: 400px;"></div>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <script>
+        var networkData = {{ networkJSON | safe }};
+        var nodes = new vis.DataSet(networkData.nodes);
+        var edges = new vis.DataSet(networkData.edges);
+    
+        var container = document.getElementById('network');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {};
+        var network = new vis.Network(container, data, options);
+    </script>
+    <div id="mood-div"></div>
+    <script>
+        var moodData = {{ moodJSON | safe }};
+        var layout = {
+            title: 'Mood Map of Tracks',
+            xaxis: {title: 'Energy'},
+            yaxis: {title: 'Valence (Musical Positiveness)'},
+            hovermode: 'closest'
+        };
+        Plotly.newPlot('mood-div', moodData, layout);
+    </script>
+</body>
+</html>
