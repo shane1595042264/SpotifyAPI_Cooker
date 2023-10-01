@@ -8,3 +8,4 @@ __pycache__/
 
 # If using a virtual environment, ignore it
 venv/
+.cache
