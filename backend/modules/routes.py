@@ -25,7 +25,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, 
 sp_oauth = SpotifyOAuth(
     client_id=client_id,
     client_secret=client_secret,
-    redirect_uri="http://douvledorm.com/callback",
+    redirect_uri="http://127.0.0.1:5000/callback",
     scope="user-library-read user-read-recently-played user-top-read"  # Add other scopes if needed
 )
 
