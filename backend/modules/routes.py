@@ -26,7 +26,7 @@ sp_oauth = SpotifyOAuth(
     client_id=client_id,
     client_secret=client_secret,
     redirect_uri="http://127.0.0.1:5000/callback",
-    scope="user-library-read user-read-recently-played user-top-read"  # Add other scopes if needed
+    scope="user-library-read user-read-recently-played user-top-read" 
 )
 
 def setup_routes(app):
@@ -65,8 +65,6 @@ def setup_routes(app):
         # Determine the most active day
         most_active_day = day_counts.most_common(1)[0][0]
 
-        # You can fetch more user stats here...
-
         # Render the user stats page with the gathered data
         return render_template('user_stats.html', most_active_day=most_active_day, most_replayed_track=most_replayed_track, most_replayed_track_image=most_replayed_track_image)
 
@@ -95,7 +93,7 @@ def setup_routes(app):
         tracks = [track['name'] for track in top_tracks['tracks']]
         popularity = [track['popularity'] for track in top_tracks['tracks']]
         
-        # Create a bar chart using Plotly for the top tracks
+        # Create a bar chart
         data = [
             go.Bar(
                 x=tracks,
@@ -124,7 +122,7 @@ def setup_routes(app):
         # Fetch genres associated with the artist
         genres = artist_search['artists']['items'][0]['genres']
         
-        # Count genre occurrences (you can also use a database or cache to store and update this information)
+        # Count genre occurrences 
         genre_counts = {}
         for genre in genres:
             genre_counts[genre] = genre_counts.get(genre, 0) + 1
@@ -153,8 +151,7 @@ def setup_routes(app):
             for artist in track['artists']:
                 if artist['name'] != name:  # Exclude the main artist
                     collaborating_artists.append(artist['name'])
-        
-        # We'll create a basic data structure for the collaboration network
+
         # Nodes represent artists, and edges represent collaborations
         nodes = [{"id": name, "label": name}]  # Start with the main artist
         edges = []
@@ -162,7 +159,6 @@ def setup_routes(app):
             nodes.append({"id": collaborator, "label": collaborator})
             edges.append({"from": name, "to": collaborator})
 
-        # This is a basic implementation. A more refined version would consider multiple collaborations and weight edges accordingly.
         network_data = {"nodes": nodes, "edges": edges}
         networkJSON = json.dumps(network_data)
 
@@ -208,7 +204,6 @@ def setup_routes(app):
         return render_template('yearly_top_tracks.html')
     @app.route('/get_yearly_data/<int:year>')
     def get_yearly_data(year):
-        # For demonstration, we assume the US market. Adjust as needed.
         market = 'US'
         
         # Fetch top tracks from Spotify API based on the year
