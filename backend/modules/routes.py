@@ -10,6 +10,10 @@ import random
 from collections import Counter
 import re
 import string
+from flask import Flask, redirect, request, session, url_for
+from spotipy.oauth2 import SpotifyOAuth
+from collections import Counter
+import datetime
 
 load_dotenv()
 
@@ -18,9 +22,54 @@ client_id = os.getenv("SPOTIFY_CLIENT_ID")
 client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
 
-
+sp_oauth = SpotifyOAuth(
+    client_id=client_id,
+    client_secret=client_secret,
+    redirect_uri="http://127.0.0.1:5000/callback",
+    scope="user-library-read user-read-recently-played user-top-read"  # Add other scopes if needed
+)
 
 def setup_routes(app):
+    @app.route('/login')
+    def login():
+        auth_url = sp_oauth.get_authorize_url()
+        return redirect(auth_url)
+
+    @app.route('/callback')
+    def callback():
+        token_info = sp_oauth.get_access_token(request.args['code'])
+        session['token_info'] = token_info
+        return redirect(url_for('user_stats'))
+    @app.route('/user_stats')
+    def user_stats():
+        token_info = session.get('token_info', None)
+        if not token_info:
+            return redirect(url_for('login'))
+        
+        token = token_info['access_token']
+        sp = spotipy.Spotify(auth=token)
+        
+        # Fetch the last 50 tracks played by the user
+        recent_tracks = sp.current_user_recently_played(limit=50)
+
+        # Extract the day of the week for each track played
+        days_played = [datetime.datetime.fromisoformat(track['played_at'].rstrip('Z')).strftime('%A') for track in recent_tracks['items']]
+        
+        top_tracks = sp.current_user_top_tracks(limit=1, time_range='short_term')
+        most_replayed_track_image = top_tracks['items'][0]['album']['images'][0]['url'] if top_tracks['items'] and top_tracks['items'][0]['album']['images'] else None
+
+        most_replayed_track = top_tracks['items'][0]['name'] if top_tracks['items'] else "No data available"
+        # Count occurrences of each day
+        day_counts = Counter(days_played)
+
+        # Determine the most active day
+        most_active_day = day_counts.most_common(1)[0][0]
+
+        # You can fetch more user stats here...
+
+        # Render the user stats page with the gathered data
+        return render_template('user_stats.html', most_active_day=most_active_day, most_replayed_track=most_replayed_track, most_replayed_track_image=most_replayed_track_image)
+
     @app.route('/', methods=['GET', 'POST'])
     def index():
         if request.method == 'POST':
@@ -176,7 +225,7 @@ def setup_routes(app):
         image_urls = [track['album']['images'][0]['url'] if track['album']['images'] else None for track in tracks]
         audio_urls = [track['preview_url'] for track in tracks]  # Extracting the preview_url
         artists = [track['artists'][0]['name'] for track in tracks]
-        print(audio_urls)
+
         data = {
             'type': 'bar',
             'y': artists,
