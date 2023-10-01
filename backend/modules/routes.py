@@ -6,6 +6,10 @@ import plotly.graph_objs as go
 import json
 from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
+import random
+from collections import Counter
+import re
+import string
 
 load_dotenv()
 
@@ -14,13 +18,19 @@ client_id = os.getenv("SPOTIFY_CLIENT_ID")
 client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
 
+
+
 def setup_routes(app):
     @app.route('/', methods=['GET', 'POST'])
     def index():
         if request.method == 'POST':
-            artist_name = request.form['artist_name']
-            return redirect(url_for('get_artist', name=artist_name))
-        return render_template('index.html')
+                artist_name = request.form['artist_name']
+                return redirect(url_for('get_artist', name=artist_name))
+            
+            # Fetch recommended artists
+        recommended_artists = fetch_recommended_artists()
+        
+        return render_template('index.html', recommended_artists=recommended_artists)
 
 
     @app.route('/artist/<name>')
@@ -29,7 +39,8 @@ def setup_routes(app):
         artist_search = sp.search(q='artist:' + name, type='artist')
         artist_name = artist_search['artists']['items'][0]['name']
         artist_id = artist_search['artists']['items'][0]['id']
-        
+        image_url = artist_search['artists']['items'][0]['images'][0]['url'] if artist_search['artists']['items'][0]['images'] else None
+
         # Fetch the artist's top tracks
         top_tracks = sp.artist_top_tracks(artist_id, country='US')
         tracks = [track['name'] for track in top_tracks['tracks']]
@@ -122,5 +133,61 @@ def setup_routes(app):
 
         moodJSON = json.dumps(mood_data, cls=plotly.utils.PlotlyJSONEncoder)
 
-        return render_template('artist.html', artist_name=artist_name, graphJSON=graphJSON, radarJSON=radarJSON, genreJSON=genreJSON, popularityJSON=popularityJSON, networkJSON=networkJSON, moodJSON=moodJSON)
+        return render_template('artist.html', artist_name=artist_name, graphJSON=graphJSON, radarJSON=radarJSON, genreJSON=genreJSON, popularityJSON=popularityJSON, networkJSON=networkJSON, moodJSON=moodJSON, image_url=image_url)
+
+    def fetch_recommended_artists():
+        # Fetch popular playlists
+        playlists = sp.category_playlists(category_id='pop', limit=5)
+        playlist_ids = [playlist['id'] for playlist in playlists['playlists']['items']]
+        
+        # Extract tracks from these playlists and get artist details
+        all_artists = []
+        for playlist_id in playlist_ids:
+            tracks = sp.playlist_tracks(playlist_id)
+            for item in tracks['items']:
+                all_artists.extend(item['track']['artists'])
+        
+        # Randomly select a few artists to display
+        selected_artist_ids = random.sample([artist['id'] for artist in all_artists], 5)  # Select 5 random artist IDs
+
+        # Fetch detailed artist information based on the IDs
+        detailed_artists = sp.artists(selected_artist_ids)['artists']
+        
+        return detailed_artists
+    @app.route('/top_tracks_by_year')
+    def top_tracks_by_year():
+        return render_template('yearly_top_tracks.html')
+    @app.route('/get_yearly_data/<int:year>')
+    def get_yearly_data(year):
+        # For demonstration, we assume the US market. Adjust as needed.
+        market = 'US'
+        
+        # Fetch top tracks from Spotify API based on the year
+        results = sp.search(q=f'year:{year}', type='track', limit=50, market=market)
+        tracks = results['tracks']['items']
+
+        # Sort tracks by popularity and take top 10
+        tracks = sorted(tracks, key=lambda x: -x['popularity'])[:10]
+
+        popularity = [track['popularity'] for track in tracks]
+        track_names = [track['name'] for track in tracks]
+
+        # Retrieve image URLs for the tracks
+        image_urls = [track['album']['images'][0]['url'] if track['album']['images'] else None for track in tracks]
+        audio_urls = [track['preview_url'] for track in tracks]  # Extracting the preview_url
+        artists = [track['artists'][0]['name'] for track in tracks]
+        print(audio_urls)
+        data = {
+            'type': 'bar',
+            'y': artists,
+            'x': popularity,
+            'text': track_names,
+            'orientation': 'h',
+            'images': image_urls,
+            'audio_urls': audio_urls  # Adding the audio URLs to the data
+        }
+
+        return jsonify(data)
+
+
 

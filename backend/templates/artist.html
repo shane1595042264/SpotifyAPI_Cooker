@@ -3,12 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Music Cooker - Artist Details</title>
+    <style>
+        .section-title {
+            text-align: center;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .section-description {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #555;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-
-    <h1>{{ artist_name }}</h1>
+    {% include '_header.html' %}
+    <h1 style="text-align:center;">{{ artist_name }}</h1>
+    <div style="text-align:center;">
+        <img src="{{ image_url }}" alt="{{ artist_name }}" width="300" style="margin:auto;">
+    </div>
 
     <!-- Bar Chart for Top Tracks Popularity -->
+    <div class="section-title">Top Tracks Popularity</div>
+    <div class="section-description">A bar chart showing the popularity of the top tracks of the artist.</div>
     <div id="plotly-div"></div>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>
@@ -17,6 +38,8 @@
     </script>
     
     <!-- Radar Chart for Audio Features -->
+    <div class="section-title">Audio Features Overview</div>
+    <div class="section-description">A radar chart representing various audio features of the artist's tracks.</div>
     <div id="radar-div"></div>
     <script>
         var radarData = {{ radarJSON | safe }};
@@ -25,6 +48,8 @@
     </script>
     
     <!-- Pie Chart for Genre Distribution -->
+    <div class="section-title">Genre Distribution</div>
+    <div class="section-description">A pie chart showcasing the distribution of genres for the artist's tracks.</div>
     <div id="genre-div"></div>
     <script>
         var genreData = {{ genreJSON | safe }};
@@ -32,6 +57,8 @@
     </script>
     
     <!-- Histogram for Popularity Distribution -->
+    <div class="section-title">Track Popularity Distribution</div>
+    <div class="section-description">A histogram representing the distribution of track popularities.</div>
     <div id="popularity-div"></div>
     <script>
         var popularityData = {{ popularityJSON | safe }};
@@ -42,6 +69,10 @@
         };
         Plotly.newPlot('popularity-div', popularityData, layout);
     </script>
+    
+    <!-- Collaboration Network -->
+    <div class="section-title">Collaboration Network</div>
+    <div class="section-description">A network graph showing collaborations and relationships between artists.</div>
     <div id="network" style="width: 800px; height: 400px;"></div>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
@@ -58,6 +89,10 @@
         var options = {};
         var network = new vis.Network(container, data, options);
     </script>
+    
+    <!-- Mood Map of Tracks -->
+    <div class="section-title">Mood Map of Tracks</div>
+    <div class="section-description">A scatter plot showcasing the mood of tracks based on energy and valence.</div>
     <div id="mood-div"></div>
     <script>
         var moodData = {{ moodJSON | safe }};
@@ -69,5 +104,6 @@
         };
         Plotly.newPlot('mood-div', moodData, layout);
     </script>
+
 </body>
 </html>

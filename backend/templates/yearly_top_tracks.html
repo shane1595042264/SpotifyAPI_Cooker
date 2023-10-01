@@ -1,0 +1,121 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Top Tracks by Year</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        #year-slider {
+            width: 100%;
+        }
+    </style>
+     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    {% include '_header.html' %}
+<h1>Top Tracks by Year</h1>
+<audio id="audio-player" controls></audio>
+
+<input type="range" min="1900" max="2023" value="2023" id="year-slider" oninput="updateDisplayYear()" onchange="updateYearlyData()">
+
+<label id="selected-year">2023</label>
+
+<div id="chart-div"></div>
+
+<script>
+function playAudio(url) {
+    let audioPlayer = document.getElementById('audio-player');
+    if (!audioPlayer) {
+        audioPlayer = document.createElement('audio');
+        audioPlayer.id = 'audio-player';
+        audioPlayer.controls = true;
+        document.body.appendChild(audioPlayer);
+    }
+    audioPlayer.src = url;
+    audioPlayer.play();
+}
+function updateDisplayYear() {
+    let year = document.getElementById('year-slider').value;
+    document.getElementById('selected-year').innerText = year;
+}
+
+
+function updateYearlyData() {
+    let year = document.getElementById('year-slider').value;
+    document.getElementById('selected-year').innerText = year;
+    
+    fetch('/get_yearly_data/' + year)
+        .then(response => response.json())
+        .then(data => {
+            let sortedIndices = Array.from(Array(data.x.length).keys()).sort((a, b) => data.x[b] - data.x[a]);
+            
+            data.x = sortedIndices.map(i => data.x[i]);
+            data.y = sortedIndices.map(i => data.y[i]);
+            data.text = sortedIndices.map(i => data.text[i]);
+            data.images = sortedIndices.map(i => data.images[i]);
+            data.audio_urls = sortedIndices.map(i => data.audio_urls[i]);
+            let customImages = data['x'].map((popularity, idx) => {
+                return {
+                    source: data.images[idx], 
+                    xref: "x",
+                    yref: "y",
+                    x: popularity - 5,
+                    y: data['y'][idx],
+                    xanchor: "right",
+                    yanchor: "middle",
+                    sizex: 15,
+                    sizey: 1.2,
+                    opacity: 1.0,
+                    layer: "above",
+                    customdata: data.audio_urls[idx]
+                };
+            });
+
+            let layout = {
+                title: 'Top Tracks Popularity in ' + year,
+                xaxis: { 
+                    title: 'Popularity',
+                    range: [0, 100]
+                },
+                yaxis: {
+                    title: 'Artist',
+                    categoryorder: 'total ascending'
+                },
+                transition: {
+                    duration: 500,
+                    easing: 'cubic-in-out'
+                },
+                images: customImages,
+                bargap: 0.4,
+                height: window.innerHeight * 0.8,
+            };
+
+            Plotly.newPlot('chart-div', [data], layout);
+            
+            // Autoplay the top track
+            playAudio(data.audio_urls[0]);
+
+        });
+}
+
+
+// Initial load
+updateYearlyData();
+document.getElementById('chart-div').on('plotly_click', function(data){
+            // Identify the clicked bar's index
+            let clickedBarIndex = data.points[0].pointNumber;
+
+            // Get the corresponding audio URL
+            let audioUrl = data.data[0].audio_urls[clickedBarIndex];
+
+            // Play the audio
+            let audioPlayer = document.getElementById('audio-player');
+            audioPlayer.src = audioUrl;
+            audioPlayer.play();
+        });
+</script>
+
+</body>
+</html>
