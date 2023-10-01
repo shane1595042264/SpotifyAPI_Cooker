@@ -81,7 +81,10 @@ function updateYearlyData() {
                 },
                 yaxis: {
                     title: 'Artist',
-                    categoryorder: 'total ascending'
+                    categoryorder: 'total ascending',
+                    tickfont: {
+            size: 1  // Decrease font size if required
+        }
                 },
                 transition: {
                     duration: 500,
@@ -90,6 +93,10 @@ function updateYearlyData() {
                 images: customImages,
                 bargap: 0.4,
                 height: window.innerHeight * 0.8,
+                margin: {
+        l: 200,  // Adjust this value for the left margin
+    },
+    autosize: true
             };
 
             Plotly.newPlot('chart-div', [data], layout);
