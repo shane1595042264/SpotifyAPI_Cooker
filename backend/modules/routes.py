@@ -55,7 +55,7 @@ def setup_routes(app):
         # Extract the day of the week for each track played
         days_played = [datetime.datetime.fromisoformat(track['played_at'].rstrip('Z')).strftime('%A') for track in recent_tracks['items']]
         
-        top_tracks = sp.current_user_top_tracks(limit=1, time_range='short_term')
+        top_tracks = sp.current_user_top_tracks(limit=1, time_range='long_term')
         most_replayed_track_image = top_tracks['items'][0]['album']['images'][0]['url'] if top_tracks['items'] and top_tracks['items'][0]['album']['images'] else None
 
         most_replayed_track = top_tracks['items'][0]['name'] if top_tracks['items'] else "No data available"
